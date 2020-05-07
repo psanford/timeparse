@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+
+require 'time'
+require 'getoptlong'
+
+format = nil
+help = false
+GetoptLong.new(
+  ['--unix',  GetoptLong::NO_ARGUMENT],
+  ['--unix_ms',  GetoptLong::NO_ARGUMENT],
+  ['--utc',  GetoptLong::NO_ARGUMENT],
+  ['--local',  GetoptLong::NO_ARGUMENT],
+  ['--system',  GetoptLong::NO_ARGUMENT],
+  ['--help', GetoptLong::NO_ARGUMENT],
+).each do |opt, arg|
+  case opt
+  when '--unix'
+    format = :unix
+  when '--unix_ms'
+    format = :unix_ms
+  when '--utc'
+    format = :utc
+  when '--local'
+    format = :local
+  when '--system'
+    format = :system
+  when '--help'
+    help = true
+  end
+end
+
+input = ARGV[0]
+
+def usage
+  STDERR.puts("usage: #{$0} <time|epoch|now> [--unix|unix_ms|utc|local|system]")
+  exit 1
+end
+
+if input == nil || help == true
+  usage()
+end
+
+t = nil
+u = nil
+
+if input.match(/^[0-9.]+$/)
+  i = input.to_f
+  while i > 1000000000000
+    i /= 1000
+  end
+  t = Time.at(i)
+elsif input == "now"
+  t = Time.new
+else
+  t = Time.parse(input)
+end
+
+if format == :unix
+  puts t.to_i
+elsif format == :unix_ms
+  puts (t.to_f * 1000).to_i
+elsif format == :local
+  puts t.to_datetime.rfc3339(3)
+elsif format == :system
+  puts Time.at(t.to_f).to_datetime.rfc3339(3)
+elsif format == :utc
+  puts t.dup.utc.to_datetime.rfc3339(3)
+else
+  puts "epoch seconds : #{t.to_i}"
+  puts "epoch ms      : #{(t.to_f * 1000).to_i}"
+  puts "system time   : #{Time.at(t.to_f).to_datetime.rfc3339(3)}"
+  puts "ts local time : #{t.to_datetime.rfc3339(3)}"
+  puts "utc time      : #{t.dup.utc.to_datetime.rfc3339(3)}"
+end
