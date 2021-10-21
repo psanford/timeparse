@@ -52,7 +52,28 @@ if input.match(/^[0-9.]+$/)
 elsif input == "now"
   t = Time.new
 else
-  t = Time.parse(input)
+  trys = [
+    Time.method(:rfc2822),
+    Time.method(:httpdate),
+    Time.method(:xmlschema),
+  ]
+  match = false
+  trys.each do |fn|
+    begin
+      t = fn.call(input)
+      match = true
+    rescue
+    end
+  end
+
+  if !match
+    # Thu Oct 21 18:04:33 2021 +0100 => '2021 Oct 21 18:04:33 +0100'
+    if m = input.match(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) ((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+ \d+:\d+:\d+(?:.\d+)?) (\d+)(.*)/)
+      input = "#{m[3]} #{m[2]} #{m[4]}"
+    end
+
+    t = Time.parse(input)
+  end
 end
 
 if format == :unix
