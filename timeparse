@@ -11,6 +11,7 @@ GetoptLong.new(
   ['--utc',  GetoptLong::NO_ARGUMENT],
   ['--local',  GetoptLong::NO_ARGUMENT],
   ['--system',  GetoptLong::NO_ARGUMENT],
+  ['--relative', GetoptLong::NO_ARGUMENT],
   ['--help', GetoptLong::NO_ARGUMENT],
 ).each do |opt, arg|
   case opt
@@ -24,6 +25,8 @@ GetoptLong.new(
     format = :local
   when '--system'
     format = :system
+  when '--relative'
+    format = :relative
   when '--help'
     help = true
   end
@@ -32,7 +35,7 @@ end
 input = ARGV[0]
 
 def usage
-  STDERR.puts("usage: #{$0} <time|epoch|now> [--unix|unix_ms|utc|local|system]")
+  STDERR.puts("usage: #{$0} <time|epoch|now> [--unix|unix_ms|utc|local|system|relative]")
   exit 1
 end
 
@@ -86,6 +89,21 @@ elsif format == :system
   puts Time.at(t.to_f).to_datetime.rfc3339(3)
 elsif format == :utc
   puts t.dup.utc.to_datetime.rfc3339(3)
+elsif format == :relative
+  since = (Time.now - t).to_i
+  if since < 120
+    seconds = since.to_i
+    puts "#{seconds} seconds ago"
+  elsif since < 60 * 60
+    minutes = since / 60
+    puts "#{minutes} minutes ago"
+  elsif since < 60 * 60 * 24
+    hours = since / 60 / 60
+    puts "#{hours} hours ago"
+  else
+    days = since / 60 / 60 / 24
+    puts "#{days} days ago"
+  end
 else
   puts "epoch seconds : #{t.to_i}"
   puts "epoch ms      : #{(t.to_f * 1000).to_i}"
